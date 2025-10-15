@@ -6,8 +6,9 @@ import { PortableText } from '@portabletext/react'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import type { AboutData, ProjectData } from '@/types'
 
 const query = groq`{
   "about": *[_type == "about"][0],
@@ -33,8 +34,8 @@ const query = groq`{
 }`
 
 interface ProjectsData {
-  about: any;
-  projects: any[];
+  about: AboutData | null;
+  projects: ProjectData[];
   resumeURL: string | null;
 }
 
@@ -45,7 +46,7 @@ export default function ProjectsPage() {
     resumeURL: null
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedProject, setSelectedProject] = useState<any>(null)
+  const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [projectImageIndices, setProjectImageIndices] = useState<{[key: string]: number}>({})
 
@@ -96,7 +97,7 @@ export default function ProjectsPage() {
     }))
     .filter(group => group.projects.length > 0)
 
-  const openProjectDialog = (project: any) => {
+  const openProjectDialog = (project: ProjectData) => {
     setSelectedProject(project)
     setCurrentImageIndex(0)
     // Prevent body scroll when modal is open
@@ -110,21 +111,21 @@ export default function ProjectsPage() {
     document.body.style.overflow = 'unset'
   }
 
-  const nextImage = () => {
-    if (selectedProject?.images) {
+  const nextImage = useCallback(() => {
+    if (selectedProject?.images && selectedProject.images.length > 0) {
       setCurrentImageIndex(prev => 
-        prev < selectedProject.images.length - 1 ? prev + 1 : 0
+        prev < selectedProject.images!.length - 1 ? prev + 1 : 0
       )
     }
-  }
+  }, [selectedProject?.images])
 
-  const prevImage = () => {
-    if (selectedProject?.images) {
+  const prevImage = useCallback(() => {
+    if (selectedProject?.images && selectedProject.images.length > 0) {
       setCurrentImageIndex(prev => 
-        prev > 0 ? prev - 1 : selectedProject.images.length - 1
+        prev > 0 ? prev - 1 : selectedProject.images!.length - 1
       )
     }
-  }
+  }, [selectedProject?.images])
 
   // Keyboard navigation
   useEffect(() => {
@@ -136,17 +137,17 @@ export default function ProjectsPage() {
           closeProjectDialog()
           break
         case 'ArrowLeft':
-          if (selectedProject.images?.length > 1) prevImage()
+          if (selectedProject.images && selectedProject.images.length > 1) prevImage()
           break
         case 'ArrowRight':
-          if (selectedProject.images?.length > 1) nextImage()
+          if (selectedProject.images && selectedProject.images.length > 1) nextImage()
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [selectedProject])
+  }, [selectedProject, nextImage, prevImage])
 
   return (
     <div className="min-h-screen text-white">
@@ -256,7 +257,7 @@ export default function ProjectsPage() {
                   <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
                 </div>
                 <span className="text-[#8b949e] text-sm font-mono">{selectedProject.title}</span>
-                {selectedProject.images?.length > 1 && (
+                {selectedProject.images && selectedProject.images.length > 1 && (
                   <span className="text-[#8b949e] text-xs bg-[#21262d] px-2 py-1 rounded">
                     {currentImageIndex + 1} / {selectedProject.images.length}
                   </span>
@@ -390,7 +391,7 @@ export default function ProjectsPage() {
                   <div className="mt-6 pt-6 border-t border-[#21262d]">
                     <h4 className="text-[#8b949e] text-xs uppercase tracking-wider mb-3">Gallery</h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {selectedProject.images.map((img: any, idx: number) => (
+                      {selectedProject.images.map((img, idx: number) => (
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIndex(idx)}
@@ -429,7 +430,7 @@ export default function ProjectsPage() {
 }
 
 // Project Card Component
-function ProjectCard({ project, onOpen, imageIndex }: { project: any; onOpen: (project: any) => void; imageIndex: number }) {
+function ProjectCard({ project, onOpen, imageIndex }: { project: ProjectData; onOpen: (project: ProjectData) => void; imageIndex: number }) {
   const currentImageIndex = imageIndex || 0
   const thumbnailUrl = project.images?.[currentImageIndex]?.asset?.url
 

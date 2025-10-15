@@ -8,7 +8,8 @@ import Footer from '@/app/components/Footer'
 import { useLoading } from '@/app/components/ClientWrapper'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import type { AboutData, AcademicData, ProjectData, CocurricularData, TestimonialData } from '@/types'
 
 // GROQ query to fetch data for homepage
 const query = groq`{
@@ -79,13 +80,13 @@ const query = groq`{
 
 // Define TypeScript types for our data
 interface SanityData {
-  about: any;
-  academics: any[];
-  projects: any[];
-  allProjects: any[];
-  cocurriculars: any[];
-  allCocurriculars: any[];
-  testimonials: any[];
+  about: AboutData | null;
+  academics: AcademicData[];
+  projects: ProjectData[];
+  allProjects: ProjectData[];
+  cocurriculars: CocurricularData[];
+  allCocurriculars: CocurricularData[];
+  testimonials: TestimonialData[];
   resumeURL: string | null;
 }
 
@@ -102,14 +103,38 @@ export default function Home() {
   })
   const { setLoading } = useLoading()
   const [isPopupOpen, setIsPopupOpen] = useState(false)
-  const [currentImages, setCurrentImages] = useState<any[]>([])
+  const [currentImages, setCurrentImages] = useState<Array<{ asset?: { url: string }; alt?: string }>>([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [animatedCards, setAnimatedCards] = useState<Set<number>>(new Set())
   const [timelineProgress, setTimelineProgress] = useState(0)
-  const [hasTimelineStarted, setHasTimelineStarted] = useState(false)
-  const [selectedAcademic, setSelectedAcademic] = useState<any>(null)
+  const [selectedAcademic, setSelectedAcademic] = useState<AcademicData | CocurricularData | null>(null)
   const [projectImageIndices, setProjectImageIndices] = useState<{[key: string]: number}>({})
   const [cocurricularImageIndices, setCocurricularImageIndices] = useState<{[key: string]: number}>({})
+
+  // Type guard functions
+  const isAcademicData = (item: AcademicData | CocurricularData | null): item is AcademicData => {
+    return item !== null && 'title' in item
+  }
+
+  const isCocurricularData = (item: AcademicData | CocurricularData | null): item is CocurricularData => {
+    return item !== null && 'activity' in item
+  }
+
+  // Helper function to get display name
+  const getDisplayName = (item: AcademicData | CocurricularData | null): string => {
+    if (!item) return 'Document'
+    if (isAcademicData(item)) return item.title || 'Document'
+    if (isCocurricularData(item)) return item.activity || 'Document'
+    return 'Document'
+  }
+
+  // Helper function to get category name
+  const getCategoryName = (item: AcademicData | CocurricularData | null): string => {
+    if (!item) return 'Activity'
+    if (isAcademicData(item)) return item.title || 'Academic'
+    if (isCocurricularData(item)) return item.category || item.activity || 'Activity'
+    return 'Activity'
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -174,6 +199,19 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [data.cocurriculars])
 
+  // Image navigation functions wrapped in useCallback
+  const nextImage = useCallback(() => {
+    setCurrentImageIndex(prev => 
+      prev < currentImages.length - 1 ? prev + 1 : 0
+    )
+  }, [currentImages.length])
+
+  const prevImage = useCallback(() => {
+    setCurrentImageIndex(prev => 
+      prev > 0 ? prev - 1 : currentImages.length - 1
+    )
+  }, [currentImages.length])
+
   // Keyboard navigation for popup
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -194,7 +232,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [isPopupOpen, currentImages.length])
+  }, [isPopupOpen, currentImages.length, nextImage, prevImage])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -269,7 +307,7 @@ export default function Home() {
     return () => window.removeEventListener('scroll', throttledScroll)
   }, [])
 
-  const openImagePopup = (images: any[], startIndex: number = 0, academicItem: any = null) => {
+  const openImagePopup = (images: Array<{ asset?: { url: string }; alt?: string }>, startIndex: number = 0, academicItem: AcademicData | CocurricularData | null = null) => {
     setCurrentImages(images)
     setCurrentImageIndex(startIndex)
     setSelectedAcademic(academicItem)
@@ -285,18 +323,6 @@ export default function Home() {
     setSelectedAcademic(null)
     // Re-enable body scroll when modal is closed
     document.body.style.overflow = 'unset'
-  }
-
-  const nextImage = () => {
-    setCurrentImageIndex(prev => 
-      prev < currentImages.length - 1 ? prev + 1 : 0
-    )
-  }
-
-  const prevImage = () => {
-    setCurrentImageIndex(prev => 
-      prev > 0 ? prev - 1 : currentImages.length - 1
-    )
   }
 
   // Technical skills list with relevant icons
@@ -392,9 +418,11 @@ export default function Home() {
                 {/* Profile Photo */}
                 <div className="flex justify-center">
                   {data.about?.profileImage ? (
-                    <img 
+                    <Image 
                       src={data.about.profileImage} 
                       alt="Profile" 
+                      width={224}
+                      height={224}
                       className="w-56 h-56 rounded-full border-4 border-purple-500/50 object-cover shadow-[0_20px_60px_rgba(147,51,234,0.5)] animate-pulse" 
                     />
                   ) : (
@@ -814,7 +842,7 @@ export default function Home() {
                       </h3>
                       
                       <span className="inline-block bg-purple-900/50 backdrop-blur-sm text-purple-300 px-3 py-1 rounded-full text-sm border border-purple-700/70 capitalize mb-8">
-                        {item.category}
+                        {item.category || 'Activity'}
                       </span>
 
                       {/* Description - Only visible on hover */}
@@ -822,8 +850,10 @@ export default function Home() {
                         <div className="text-gray-300 text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 prose prose-invert prose-sm max-w-none line-clamp-3">
                           {typeof item.description === 'string' ? (
                             <p>{item.description}</p>
-                          ) : (
+                          ) : Array.isArray(item.description) ? (
                             <PortableText value={item.description} />
+                          ) : (
+                            <p>No description available</p>
                           )}
                         </div>
                       )}
@@ -890,7 +920,7 @@ export default function Home() {
                         
                         {/* Testimonial */}
                         <blockquote className="text-gray-300 italic text-base leading-relaxed border-t border-white/10 pt-6">
-                          "{item.testimonial}"
+                          &quot;{item.testimonial}&quot;
                         </blockquote>
                       </div>
                     </div>
@@ -921,7 +951,7 @@ export default function Home() {
                         
                         {/* Testimonial */}
                         <blockquote className="text-gray-300 italic text-base leading-relaxed border-t border-white/10 pt-6">
-                          "{item.testimonial}"
+                          &quot;{item.testimonial}&quot;
                         </blockquote>
                       </div>
                     </div>
@@ -947,7 +977,7 @@ export default function Home() {
               <h2 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">Get In Touch</h2>
               <div className="w-24 h-1 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto"></div>
               <p className="text-gray-400 mt-6 text-xl max-w-2xl mx-auto">
-                I'm always open to discussing new opportunities, collaborations, or just having a chat about technology and innovation.
+                I&apos;m always open to discussing new opportunities, collaborations, or just having a chat about technology and innovation.
               </p>
             </div>
             <div className="text-center">
@@ -980,7 +1010,7 @@ export default function Home() {
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 text-[#8b949e]">📄</div>
                   <span className="text-[#c9d1d9] text-sm font-medium font-mono">
-                    {currentImages[currentImageIndex]?.alt || selectedAcademic.title || selectedAcademic.activity || 'Document'}
+                    {currentImages[currentImageIndex]?.alt || getDisplayName(selectedAcademic)}
                   </span>
                 </div>
                 {/* Image Counter */}
@@ -1003,11 +1033,13 @@ export default function Home() {
             <div className="grid lg:grid-cols-[1fr_350px] h-[70vh]">
               {/* Left Side - Image Viewer */}
               <div className="relative bg-[#0d1117] flex items-center justify-center p-8 border-r border-[#21262d]">
-                {currentImages.length > 0 && (
+                {currentImages.length > 0 && currentImages[currentImageIndex]?.asset?.url && (
                   <>
-                    <img
-                      src={currentImages[currentImageIndex]?.asset?.url}
-                      alt={currentImages[currentImageIndex]?.alt || selectedAcademic.title || selectedAcademic.activity || 'Image'}
+                    <Image
+                      src={currentImages[currentImageIndex].asset.url}
+                      alt={currentImages[currentImageIndex]?.alt || getDisplayName(selectedAcademic)}
+                      width={800}
+                      height={600}
                       className="max-w-full max-h-full object-contain rounded shadow-2xl border border-[#21262d]"
                     />
                     {/* Navigation Arrows */}
@@ -1035,14 +1067,14 @@ export default function Home() {
                 {/* Document Info */}
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-[#c9d1d9] mb-2">
-                    {currentImages[currentImageIndex]?.alt || selectedAcademic.title || selectedAcademic.activity || 'Document'}
+                    {currentImages[currentImageIndex]?.alt || getDisplayName(selectedAcademic)}
                   </h3>
                   <div className="flex items-center gap-2 text-xs text-[#8b949e] mb-4">
                     <span className="px-2 py-1 bg-[#a371f7]/20 text-[#a371f7] rounded border border-[#a371f7]/30 font-mono">
-                      {selectedAcademic.year || 'Record'}
+                      {selectedAcademic?.year || 'Record'}
                     </span>
                     <span>•</span>
-                    <span className="capitalize">{selectedAcademic.title || selectedAcademic.category || selectedAcademic.activity || 'Activity'}</span>
+                    <span className="capitalize">{getCategoryName(selectedAcademic)}</span>
                   </div>
                 </div>
                 {/* Description Section */}
@@ -1052,11 +1084,13 @@ export default function Home() {
                     <h4 className="text-sm font-semibold text-[#c9d1d9] uppercase tracking-wide">Details</h4>
                   </div>
                   <div className="text-[#8b949e] text-sm leading-relaxed pl-3 prose prose-invert prose-sm max-w-none">
-                    {selectedAcademic.description ? (
+                    {selectedAcademic?.description ? (
                       typeof selectedAcademic.description === 'string' ? (
                         <p>{selectedAcademic.description}</p>
-                      ) : (
+                      ) : Array.isArray(selectedAcademic.description) ? (
                         <PortableText value={selectedAcademic.description} />
+                      ) : (
+                        <p>No description provided.</p>
                       )
                     ) : (
                       <p>No description provided.</p>
@@ -1081,11 +1115,15 @@ export default function Home() {
                               : 'border-[#21262d] hover:border-[#30363d]'
                           }`}
                         >
-                          <img
-                            src={image.asset?.url}
-                            alt={image.alt}
-                            className="w-full h-full object-cover"
-                          />
+                          {image.asset?.url && (
+                            <Image
+                              src={image.asset.url}
+                              alt={image.alt || 'Thumbnail'}
+                              width={100}
+                              height={100}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                         </button>
                       ))}
                     </div>

@@ -3,6 +3,7 @@ import { groq } from 'next-sanity'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import ContactForm from '@/app/components/ContactForm'
+import type { AboutData } from '@/types'
 
 const query = groq`{
   "about": *[_type == "about"][0],
@@ -10,7 +11,7 @@ const query = groq`{
 }`
 
 interface ContactData {
-  about: any;
+  about: AboutData | null;
   resumeURL: string | null;
 }
 
@@ -36,7 +37,7 @@ export default async function ContactPage() {
             <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent font-mono tracking-tight">Get In Touch</h1>
             <div className="w-24 h-1 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto"></div>
             <p className="text-gray-400 mt-6 text-lg max-w-2xl mx-auto">
-              I'm always open to discussing new opportunities, collaborations, or just having a chat about technology and innovation.
+              I&apos;m always open to discussing new opportunities, collaborations, or just having a chat about technology and innovation.
             </p>
           </div>
 

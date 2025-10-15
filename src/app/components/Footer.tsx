@@ -13,7 +13,7 @@ export default function Footer({ authorName = "Your Name", email, socialLinks }:
     <footer className="relative py-16 mt-24 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-8 text-center">
         <p className="text-gray-400 mb-6 text-lg">
-          Let's build something amazing together
+          Let&apos;s build something amazing together
         </p>
         <div className="flex justify-center gap-6 mb-8">
           {socialLinks?.github && (

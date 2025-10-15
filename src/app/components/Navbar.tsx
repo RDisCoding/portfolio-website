@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useLoading } from './ClientWrapper'
 
 interface NavbarProps {
   resumeUrl: string | null;
@@ -16,7 +14,6 @@ export default function Navbar({ resumeUrl }: NavbarProps) {
   const [lastScrollY, setLastScrollY] = useState(0)
   const pathname = usePathname()
   const router = useRouter()
-  const { startPageTransition } = useLoading()
 
   const sections = [
     { id: 'home', label: 'Home' },
@@ -41,16 +38,6 @@ export default function Navbar({ resumeUrl }: NavbarProps) {
     // If we're on another page, navigate to home with hash
     // Use router.push to prevent unnecessary loading screens
     router.push(`/#${id}`)
-    setIsMobileMenuOpen(false)
-  }
-
-  const navigateToHome = () => {
-    if (pathname !== '/') {
-      startPageTransition()
-      router.push('/')
-    } else {
-      scrollToSection('home')
-    }
     setIsMobileMenuOpen(false)
   }
 

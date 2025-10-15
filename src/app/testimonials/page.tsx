@@ -3,6 +3,7 @@ import { groq } from 'next-sanity'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import TestimonialForm from '@/app/components/TestimonialForm'
+import type { AboutData, TestimonialData } from '@/types'
 
 const query = groq`{
   "about": *[_type == "about"][0],
@@ -11,8 +12,8 @@ const query = groq`{
 }`
 
 interface TestimonialsData {
-  about: any;
-  testimonials: any[];
+  about: AboutData | null;
+  testimonials: TestimonialData[];
   resumeURL: string | null;
 }
 

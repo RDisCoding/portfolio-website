@@ -6,8 +6,9 @@ import { PortableText } from '@portabletext/react'
 import Navbar from '@/app/components/Navbar'
 import Footer from '@/app/components/Footer'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import type { AboutData, CocurricularData } from '@/types'
 
 const query = groq`{
   "about": *[_type == "about"][0],
@@ -30,8 +31,8 @@ const query = groq`{
 }`
 
 interface CocurricularsData {
-  about: any;
-  cocurriculars: any[];
+  about: AboutData | null;
+  cocurriculars: CocurricularData[];
   resumeURL: string | null;
 }
 
@@ -42,7 +43,7 @@ export default function CocurricularsPage() {
     resumeURL: null
   })
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedActivity, setSelectedActivity] = useState<any>(null)
+  const [selectedActivity, setSelectedActivity] = useState<CocurricularData | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [activityImageIndices, setActivityImageIndices] = useState<{[key: string]: number}>({})
 
@@ -94,7 +95,7 @@ export default function CocurricularsPage() {
     }))
     .filter(group => group.activities.length > 0)
 
-  const openActivityDialog = (activity: any) => {
+  const openActivityDialog = (activity: CocurricularData) => {
     setSelectedActivity(activity)
     setCurrentImageIndex(0)
     // Prevent body scroll when modal is open
@@ -108,21 +109,21 @@ export default function CocurricularsPage() {
     document.body.style.overflow = 'unset'
   }
 
-  const nextImage = () => {
-    if (selectedActivity?.images) {
+  const nextImage = useCallback(() => {
+    if (selectedActivity?.images && selectedActivity.images.length > 0) {
       setCurrentImageIndex(prev => 
-        prev < selectedActivity.images.length - 1 ? prev + 1 : 0
+        prev < selectedActivity.images!.length - 1 ? prev + 1 : 0
       )
     }
-  }
+  }, [selectedActivity?.images])
 
-  const prevImage = () => {
-    if (selectedActivity?.images) {
+  const prevImage = useCallback(() => {
+    if (selectedActivity?.images && selectedActivity.images.length > 0) {
       setCurrentImageIndex(prev => 
-        prev > 0 ? prev - 1 : selectedActivity.images.length - 1
+        prev > 0 ? prev - 1 : selectedActivity.images!.length - 1
       )
     }
-  }
+  }, [selectedActivity?.images])
 
   // Keyboard navigation
   useEffect(() => {
@@ -134,17 +135,17 @@ export default function CocurricularsPage() {
           closeActivityDialog()
           break
         case 'ArrowLeft':
-          if (selectedActivity.images?.length > 1) prevImage()
+          if (selectedActivity.images && selectedActivity.images.length > 1) prevImage()
           break
         case 'ArrowRight':
-          if (selectedActivity.images?.length > 1) nextImage()
+          if (selectedActivity.images && selectedActivity.images.length > 1) nextImage()
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [selectedActivity])
+  }, [selectedActivity, nextImage, prevImage])
 
   return (
     <div className="min-h-screen text-white">
@@ -254,7 +255,7 @@ export default function CocurricularsPage() {
                   <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
                 </div>
                 <span className="text-[#8b949e] text-sm font-mono">{selectedActivity.activity}</span>
-                {selectedActivity.images?.length > 1 && (
+                {selectedActivity.images && selectedActivity.images.length > 1 && (
                   <span className="text-[#8b949e] text-xs bg-[#21262d] px-2 py-1 rounded">
                     {currentImageIndex + 1} / {selectedActivity.images.length}
                   </span>
@@ -322,7 +323,13 @@ export default function CocurricularsPage() {
                   </div>
                   {selectedActivity.description && (
                     <div className="text-[#8b949e] text-sm prose prose-invert prose-sm max-w-none mb-4">
-                      <PortableText value={selectedActivity.description} />
+                      {typeof selectedActivity.description === 'string' ? (
+                        <p>{selectedActivity.description}</p>
+                      ) : Array.isArray(selectedActivity.description) ? (
+                        <PortableText value={selectedActivity.description} />
+                      ) : (
+                        <p>No description available</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -347,7 +354,7 @@ export default function CocurricularsPage() {
                   <div className="mt-6 pt-6 border-t border-[#21262d]">
                     <h4 className="text-[#8b949e] text-xs uppercase tracking-wider mb-3">Gallery</h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {selectedActivity.images.map((img: any, idx: number) => (
+                      {selectedActivity.images.map((img, idx: number) => (
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIndex(idx)}
@@ -357,12 +364,14 @@ export default function CocurricularsPage() {
                               : 'border-[#21262d] hover:border-[#30363d]'
                           }`}
                         >
-                          <Image
-                            src={img.asset?.url || '/placeholder.png'}
-                            alt={img.alt || `Image ${idx + 1}`}
-                            fill
-                            className="object-cover"
-                          />
+                          {img.asset?.url && (
+                            <Image
+                              src={img.asset.url}
+                              alt={img.alt || `Image ${idx + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -386,7 +395,7 @@ export default function CocurricularsPage() {
 }
 
 // Activity Card Component
-function ActivityCard({ activity, onOpen, imageIndex }: { activity: any; onOpen: (activity: any) => void; imageIndex: number }) {
+function ActivityCard({ activity, onOpen, imageIndex }: { activity: CocurricularData; onOpen: (activity: CocurricularData) => void; imageIndex: number }) {
   const currentImageIndex = imageIndex || 0
   const thumbnailUrl = activity.images?.[currentImageIndex]?.asset?.url
 

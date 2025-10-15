@@ -1,7 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import LoadingScreen from './LoadingScreen'
 import ScrollToTop from './ScrollToTop'
 
@@ -40,7 +40,7 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
       setIsLoading(false)
     }, isStudioRoute ? 0 : 500)
     return () => clearTimeout(timer)
-  }, [isStudioRoute])
+  }, [isStudioRoute, pathname])
 
   // Handle route changes - only show loading when actually navigating between pages
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
     }, 1000)
     
     return () => clearTimeout(timer)
-  }, [pathname, isMounted, isStudioRoute])
+  }, [pathname, isMounted, isStudioRoute, previousPath])
 
   const setLoading = (loading: boolean) => {
     setIsLoading(loading)
