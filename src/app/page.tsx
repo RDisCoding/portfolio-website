@@ -8,7 +8,7 @@ import Footer from '@/app/components/Footer'
 import { useLoading } from '@/app/components/ClientWrapper'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AboutData, AcademicData, ProjectData, CocurricularData, TestimonialData } from '@/types'
 
 // GROQ query to fetch data for homepage
@@ -110,6 +110,8 @@ export default function Home() {
   const [selectedAcademic, setSelectedAcademic] = useState<AcademicData | CocurricularData | null>(null)
   const [projectImageIndices, setProjectImageIndices] = useState<{[key: string]: number}>({})
   const [cocurricularImageIndices, setCocurricularImageIndices] = useState<{[key: string]: number}>({})
+  const testimonialScrollRef = useRef<HTMLDivElement>(null)
+  const [isTestimonialPaused, setIsTestimonialPaused] = useState(false)
 
   // Type guard functions
   const isAcademicData = (item: AcademicData | CocurricularData | null): item is AcademicData => {
@@ -145,10 +147,10 @@ export default function Home() {
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
-        // Ensure loading state is cleared
+        // Reduced delay for faster initial loading
         setTimeout(() => {
           setLoading(false)
-        }, 200)
+        }, 100) // Reduced from 200ms to 100ms
       }
     }
     fetchData()
@@ -159,7 +161,7 @@ export default function Home() {
         const id = window.location.hash.substring(1)
         const element = document.getElementById(id)
         element?.scrollIntoView({ behavior: 'smooth' })
-      }, 300)
+      }, 200) // Reduced from 300ms to 200ms
     }
   }, [setLoading])
 
@@ -211,6 +213,19 @@ export default function Home() {
       prev > 0 ? prev - 1 : currentImages.length - 1
     )
   }, [currentImages.length])
+
+  // Testimonial navigation functions
+  const scrollTestimonials = useCallback((direction: 'left' | 'right') => {
+    if (!testimonialScrollRef.current) return
+    
+    const scrollAmount = 450 // Adjust based on card width + gap
+    const newScrollPosition = testimonialScrollRef.current.scrollLeft + (direction === 'right' ? scrollAmount : -scrollAmount)
+    
+    testimonialScrollRef.current.scrollTo({
+      left: newScrollPosition,
+      behavior: 'smooth'
+    })
+  }, [])
 
   // Keyboard navigation for popup
   useEffect(() => {
@@ -886,14 +901,49 @@ export default function Home() {
               <div className="w-16 sm:w-20 md:w-24 h-1 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto"></div>
             </div>
             
-            {/* Infinite Slider Container */}
+            {/* Infinite Slider Container with Navigation */}
             <div className="relative mb-8 sm:mb-10 md:mb-12 py-4">
+              {/* Navigation Buttons */}
+              <button
+                onClick={() => scrollTestimonials('left')}
+                onMouseEnter={() => setIsTestimonialPaused(true)}
+                onMouseLeave={() => setIsTestimonialPaused(false)}
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                aria-label="Previous testimonial"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => scrollTestimonials('right')}
+                onMouseEnter={() => setIsTestimonialPaused(true)}
+                onMouseLeave={() => setIsTestimonialPaused(false)}
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                aria-label="Next testimonial"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
               {/* Translucent fade overlays for smooth blending */}
               <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-r to-transparent z-10 pointer-events-none"></div>
               <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-l to-transparent z-10 pointer-events-none"></div>
               
               {/* Slider Track - Fixed infinite loop with proper duplication */}
-              <div className="flex gap-4 sm:gap-6 md:gap-8 animate-[scroll_40s_linear_infinite]" style={{ animationPlayState: 'running' }} onMouseEnter={(e) => e.currentTarget.style.animationPlayState = 'paused'} onMouseLeave={(e) => e.currentTarget.style.animationPlayState = 'running'}>
+              <div 
+                ref={testimonialScrollRef}
+                className="flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide scroll-smooth"
+                style={{ 
+                  animationPlayState: isTestimonialPaused ? 'paused' : 'running',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }} 
+                onMouseEnter={() => setIsTestimonialPaused(true)} 
+                onMouseLeave={() => setIsTestimonialPaused(false)}
+              >
                 {/* First set of testimonials */}
                 {data.testimonials?.map((item) => {
                   const rating = item.rating || 5;

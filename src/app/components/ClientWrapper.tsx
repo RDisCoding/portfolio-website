@@ -38,7 +38,7 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
     // Skip loading screen entirely for studio routes
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, isStudioRoute ? 0 : 500)
+    }, isStudioRoute ? 0 : 300) // Reduced from 500ms to 300ms
     return () => clearTimeout(timer)
   }, [isStudioRoute, pathname])
 
@@ -59,11 +59,11 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
     // Show loading screen for actual page transitions
     setIsLoading(true)
     
-    // Keep loading screen visible longer for server component compilation
+    // Reduced loading screen duration for faster transitions
     const timer = setTimeout(() => {
       setIsLoading(false)
       setPreviousPath(pathname)
-    }, 1000)
+    }, 400) // Reduced from 1000ms to 400ms
     
     return () => clearTimeout(timer)
   }, [pathname, isMounted, isStudioRoute, previousPath])

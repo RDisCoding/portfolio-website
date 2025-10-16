@@ -79,6 +79,39 @@ body {
   animation: floatOrb5 32s ease-in-out infinite;
 }
 
+/* Mobile optimization for orbs - reduce size and count */
+@media (max-width: 768px) {
+  .orb {
+    filter: blur(60px);
+    opacity: 0.4;
+  }
+  
+  .orb1 {
+    width: 250px;
+    height: 250px;
+    top: -50px;
+    left: -50px;
+  }
+  
+  .orb2 {
+    width: 200px;
+    height: 200px;
+    bottom: -30px;
+    right: -30px;
+  }
+  
+  .orb3 {
+    width: 180px;
+    height: 180px;
+  }
+  
+  /* Hide orb4 and orb5 on mobile for cleaner look */
+  .orb4,
+  .orb5 {
+    display: none;
+  }
+}
+
 /* Enhanced floating animations with random movement patterns */
 @keyframes floatOrb1 {
   0% { transform: translate(0, 0) scale(1) rotate(0deg); }
@@ -276,6 +309,16 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(147, 51, 234, 0.7);
+}
+
+/* Hide scrollbar for testimonials slider */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 @custom-variant dark (&:is(.dark *));
