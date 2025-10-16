@@ -111,7 +111,6 @@ export default function Home() {
   const [projectImageIndices, setProjectImageIndices] = useState<{[key: string]: number}>({})
   const [cocurricularImageIndices, setCocurricularImageIndices] = useState<{[key: string]: number}>({})
   const testimonialScrollRef = useRef<HTMLDivElement>(null)
-  const [isTestimonialPaused, setIsTestimonialPaused] = useState(false)
 
   // Type guard functions
   const isAcademicData = (item: AcademicData | CocurricularData | null): item is AcademicData => {
@@ -218,7 +217,10 @@ export default function Home() {
   const scrollTestimonials = useCallback((direction: 'left' | 'right') => {
     if (!testimonialScrollRef.current) return
     
-    const scrollAmount = 450 // Adjust based on card width + gap
+    // Get the container width to calculate scroll amount
+    const containerWidth = testimonialScrollRef.current.offsetWidth
+    // Scroll by the full container width to show next set of cards
+    const scrollAmount = containerWidth
     const newScrollPosition = testimonialScrollRef.current.scrollLeft + (direction === 'right' ? scrollAmount : -scrollAmount)
     
     testimonialScrollRef.current.scrollTo({
@@ -901,111 +903,110 @@ export default function Home() {
               <div className="w-16 sm:w-20 md:w-24 h-1 bg-gradient-to-r from-purple-600 to-purple-400 mx-auto"></div>
             </div>
             
-            {/* Infinite Slider Container with Navigation */}
-            <div className="relative mb-8 sm:mb-10 md:mb-12 py-4">
-              {/* Navigation Buttons */}
-              <button
-                onClick={() => scrollTestimonials('left')}
-                onMouseEnter={() => setIsTestimonialPaused(true)}
-                onMouseLeave={() => setIsTestimonialPaused(false)}
-                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                aria-label="Previous testimonial"
-              >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={() => scrollTestimonials('right')}
-                onMouseEnter={() => setIsTestimonialPaused(true)}
-                onMouseLeave={() => setIsTestimonialPaused(false)}
-                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-2 sm:p-3 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                aria-label="Next testimonial"
-              >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              
-              {/* Translucent fade overlays for smooth blending */}
-              <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-r to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 md:w-32 bg-gradient-to-l to-transparent z-10 pointer-events-none"></div>
-              
-              {/* Slider Track - Fixed infinite loop with proper duplication */}
-              <div 
-                ref={testimonialScrollRef}
-                className="flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide scroll-smooth"
-                style={{ 
-                  animationPlayState: isTestimonialPaused ? 'paused' : 'running',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }} 
-                onMouseEnter={() => setIsTestimonialPaused(true)} 
-                onMouseLeave={() => setIsTestimonialPaused(false)}
-              >
-                {/* First set of testimonials */}
-                {data.testimonials?.map((item) => {
-                  const rating = item.rating || 5;
-                  return (
-                    <div key={item._id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[400px]">
-                      <div className="glass-card p-5 sm:p-6 md:p-8 h-full relative hover:border-purple-500/50 hover:shadow-[0_20px_60px_rgba(147,51,234,0.3)] transition-all duration-300">
-                        {/* Star Rating */}
-                        <div className="absolute top-4 sm:top-5 md:top-6 right-4 sm:right-5 md:right-6 flex text-yellow-400">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-sm sm:text-base md:text-lg ${i < rating ? 'text-yellow-400' : 'text-gray-600'}`}>
-                              {i < rating ? '⭐' : '☆'}
-                            </span>
-                          ))}
+            {/* Slider with External Navigation Buttons */}
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center gap-4 md:gap-6 mb-8 sm:mb-10 md:mb-12">
+                {/* Previous Button - Outside */}
+                <button
+                  onClick={() => scrollTestimonials('left')}
+                  className="flex-shrink-0 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-3 sm:p-4 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-lg"
+                  aria-label="Previous testimonial"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                {/* Testimonials Container */}
+                <div className="relative flex-1 py-4">
+                  {/* Translucent fade overlays for smooth blending */}
+                  <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
+                  
+                  {/* Slider Track - Responsive: 1 card mobile, 3 cards desktop */}
+                  <div 
+                    ref={testimonialScrollRef}
+                    className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
+                    style={{ 
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none'
+                    }}
+                  >
+                    {/* First set of testimonials */}
+                    {data.testimonials?.map((item) => {
+                      const rating = item.rating || 5;
+                      return (
+                        <div key={item._id} className="flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-start">
+                          <div className="glass-card p-5 sm:p-6 md:p-8 h-full relative hover:border-purple-500/50 hover:shadow-[0_20px_60px_rgba(147,51,234,0.3)] transition-all duration-300">
+                            {/* Star Rating */}
+                            <div className="absolute top-4 sm:top-5 md:top-6 right-4 sm:right-5 md:right-6 flex text-yellow-400">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className={`text-sm sm:text-base md:text-lg ${i < rating ? 'text-yellow-400' : 'text-gray-600'}`}>
+                                  {i < rating ? '⭐' : '☆'}
+                                </span>
+                              ))}
+                            </div>
+                            
+                            {/* Name and Company at Top */}
+                            <div className="mb-4 sm:mb-5 md:mb-6">
+                              <cite className="not-italic text-purple-400 font-semibold text-base sm:text-lg block">
+                                {item.name}
+                              </cite>
+                              <p className="text-gray-500 text-sm sm:text-base mt-1">{item.role} at {item.company}</p>
+                            </div>
+                            
+                            {/* Testimonial */}
+                            <blockquote className="text-gray-300 italic text-sm sm:text-base leading-relaxed border-t border-white/10 pt-4 sm:pt-5 md:pt-6">
+                              &quot;{item.testimonial}&quot;
+                            </blockquote>
+                          </div>
                         </div>
-                        
-                        {/* Name and Company at Top */}
-                        <div className="mb-4 sm:mb-5 md:mb-6">
-                          <cite className="not-italic text-purple-400 font-semibold text-base sm:text-lg block">
-                            {item.name}
-                          </cite>
-                          <p className="text-gray-500 text-sm sm:text-base mt-1">{item.role} at {item.company}</p>
+                      );
+                    })}
+                    {/* Duplicate set for seamless loop */}
+                    {data.testimonials?.map((item) => {
+                      const rating = item.rating || 5;
+                      return (
+                        <div key={`${item._id}-duplicate`} className="flex-shrink-0 w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-start">
+                          <div className="glass-card p-5 sm:p-6 md:p-8 h-full relative hover:border-purple-500/50 hover:shadow-[0_20px_60px_rgba(147,51,234,0.3)] transition-all duration-300">
+                            {/* Star Rating */}
+                            <div className="absolute top-4 sm:top-5 md:top-6 right-4 sm:right-5 md:right-6 flex text-yellow-400">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className={`text-sm sm:text-base md:text-lg ${i < rating ? 'text-yellow-400' : 'text-gray-600'}`}>
+                                  {i < rating ? '⭐' : '☆'}
+                                </span>
+                              ))}
+                            </div>
+                            
+                            {/* Name and Company at Top */}
+                            <div className="mb-4 sm:mb-5 md:mb-6">
+                              <cite className="not-italic text-purple-400 font-semibold text-base sm:text-lg block">
+                                {item.name}
+                              </cite>
+                              <p className="text-gray-500 text-sm sm:text-base mt-1">{item.role} at {item.company}</p>
+                            </div>
+                            
+                            {/* Testimonial */}
+                            <blockquote className="text-gray-300 italic text-sm sm:text-base leading-relaxed border-t border-white/10 pt-4 sm:pt-5 md:pt-6">
+                              &quot;{item.testimonial}&quot;
+                            </blockquote>
+                          </div>
                         </div>
-                        
-                        {/* Testimonial */}
-                        <blockquote className="text-gray-300 italic text-sm sm:text-base leading-relaxed border-t border-white/10 pt-4 sm:pt-5 md:pt-6">
-                          &quot;{item.testimonial}&quot;
-                        </blockquote>
-                      </div>
-                    </div>
-                  );
-                })}
-                {/* Duplicate set for seamless loop */}
-                {data.testimonials?.map((item) => {
-                  const rating = item.rating || 5;
-                  return (
-                    <div key={`${item._id}-duplicate`} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[400px]">
-                      <div className="glass-card p-5 sm:p-6 md:p-8 h-full relative hover:border-purple-500/50 hover:shadow-[0_20px_60px_rgba(147,51,234,0.3)] transition-all duration-300">
-                        {/* Star Rating */}
-                        <div className="absolute top-4 sm:top-5 md:top-6 right-4 sm:right-5 md:right-6 flex text-yellow-400">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={`text-sm sm:text-base md:text-lg ${i < rating ? 'text-yellow-400' : 'text-gray-600'}`}>
-                              {i < rating ? '⭐' : '☆'}
-                            </span>
-                          ))}
-                        </div>
-                        
-                        {/* Name and Company at Top */}
-                        <div className="mb-4 sm:mb-5 md:mb-6">
-                          <cite className="not-italic text-purple-400 font-semibold text-base sm:text-lg block">
-                            {item.name}
-                          </cite>
-                          <p className="text-gray-500 text-sm sm:text-base mt-1">{item.role} at {item.company}</p>
-                        </div>
-                        
-                        {/* Testimonial */}
-                        <blockquote className="text-gray-300 italic text-sm sm:text-base leading-relaxed border-t border-white/10 pt-4 sm:pt-5 md:pt-6">
-                          &quot;{item.testimonial}&quot;
-                        </blockquote>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Next Button - Outside */}
+                <button
+                  onClick={() => scrollTestimonials('right')}
+                  className="flex-shrink-0 bg-purple-600/80 hover:bg-purple-600 backdrop-blur-md text-white p-3 sm:p-4 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-400 shadow-lg"
+                  aria-label="Next testimonial"
+                >
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
             

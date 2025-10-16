@@ -79,7 +79,7 @@ body {
   animation: floatOrb5 32s ease-in-out infinite;
 }
 
-/* Mobile optimization for orbs - reduce size and count */
+/* Mobile optimization for orbs - reduce size but keep all orbs */
 @media (max-width: 768px) {
   .orb {
     filter: blur(60px);
@@ -105,10 +105,14 @@ body {
     height: 180px;
   }
   
-  /* Hide orb4 and orb5 on mobile for cleaner look */
-  .orb4,
+  .orb4 {
+    width: 150px;
+    height: 150px;
+  }
+  
   .orb5 {
-    display: none;
+    width: 180px;
+    height: 180px;
   }
 }
 
