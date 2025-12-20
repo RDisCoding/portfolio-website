@@ -217,16 +217,37 @@ export default function Home() {
   const scrollTestimonials = useCallback((direction: 'left' | 'right') => {
     if (!testimonialScrollRef.current) return
     
-    // Get the container width to calculate scroll amount
-    const containerWidth = testimonialScrollRef.current.offsetWidth
-    // Scroll by the full container width to show next set of cards
-    const scrollAmount = containerWidth
-    const newScrollPosition = testimonialScrollRef.current.scrollLeft + (direction === 'right' ? scrollAmount : -scrollAmount)
+    const container = testimonialScrollRef.current
+    const containerWidth = container.offsetWidth
+    const scrollLeft = container.scrollLeft
+    const scrollWidth = container.scrollWidth
     
-    testimonialScrollRef.current.scrollTo({
-      left: newScrollPosition,
-      behavior: 'smooth'
-    })
+    // Calculate scroll amount based on container width
+    const scrollAmount = containerWidth
+    
+    if (direction === 'right') {
+      const newPosition = scrollLeft + scrollAmount
+      // If we've scrolled past the halfway point of the duplicated content, reset to the beginning
+      if (newPosition >= scrollWidth / 2) {
+        container.scrollLeft = 0
+      } else {
+        container.scrollTo({
+          left: newPosition,
+          behavior: 'smooth'
+        })
+      }
+    } else {
+      const newPosition = scrollLeft - scrollAmount
+      // If we've scrolled before the beginning, jump to the end of the first set
+      if (newPosition < 0) {
+        container.scrollLeft = scrollWidth / 2 - containerWidth
+      } else {
+        container.scrollTo({
+          left: newPosition,
+          behavior: 'smooth'
+        })
+      }
+    }
   }, [])
 
   // Keyboard navigation for popup
@@ -344,30 +365,30 @@ export default function Home() {
 
   // Technical skills list with relevant icons
   const technicalSkills = [
-    { name: 'Artificial Intelligence', icon: '🤖', level: 'Advanced' },
-    { name: 'Machine Learning', icon: '🧠', level: 'Advanced' },
-    { name: 'Deep Learning', icon: '🔮', level: 'Advanced' },
-    { name: 'Natural Language Processing', icon: '💬', level: 'Advanced' },
-    { name: 'Prompt Engineering', icon: '⚡', level: 'Advanced' },
-    { name: 'Digital Forensics', icon: '🔍', level: 'Intermediate' },
-    { name: 'Python & Libraries', icon: '🐍', level: 'Advanced' },
-    { name: 'Hadoop', icon: '🐘', level: 'Intermediate' },
-    { name: 'Pig/Hive', icon: '🐽', level: 'Intermediate' },
-    { name: 'GitHub', icon: '📋', level: 'Advanced' },
-    { name: 'UI/UX', icon: '🎨', level: 'Intermediate' },
-    { name: 'PostgreSQL', icon: '🗄️', level: 'Advanced' },
-    { name: 'MongoDB', icon: '🍃', level: 'Advanced' },
-    { name: 'ExpressAPI', icon: '🚀', level: 'Advanced' },
-    { name: 'Sanity CMS', icon: '📝', level: 'Advanced' },
-    { name: 'React', icon: '⚛️', level: 'Advanced' },
-    { name: 'NextJS', icon: '▲', level: 'Advanced' },
-    { name: 'JavaScript', icon: '🟨', level: 'Advanced' },
-    { name: 'TypeScript', icon: '🔷', level: 'Advanced' },
-    { name: 'Node.js', icon: '📦', level: 'Advanced' },
-    { name: 'C', icon: '⚙️', level: 'Intermediate' },
-    { name: 'C++', icon: '🔧', level: 'Intermediate' },
-    { name: 'Java', icon: '☕', level: 'Intermediate' },
-    { name: 'Solidity', icon: '💎', level: 'Intermediate' }
+    { name: 'Artificial Intelligence', icon: '/icons/openai.png', level: 'Advanced' },
+    { name: 'Machine Learning', icon: '/icons/ml.svg', level: 'Advanced' },
+    { name: 'Deep Learning', icon: '/icons/dl.svg', level: 'Advanced' },
+    { name: 'Natural Language Processing', icon: '/icons/nlp.svg', level: 'Advanced' },
+    { name: 'Prompt Engineering', icon: '/icons/l.svg', level: 'Advanced' },
+    { name: 'Digital Forensics', icon: '/icons/audio.svg', level: 'Intermediate' },
+    { name: 'Python & Libraries', icon: '/icons/python.svg', level: 'Advanced' },
+    { name: 'Hadoop', icon: '/icons/hadoop.svg', level: 'Intermediate' },
+    { name: 'Pig/Hive', icon: '/icons/hive.png', level: 'Intermediate' },
+    { name: 'GitHub', icon: '/icons/github.svg', level: 'Advanced' },
+    { name: 'UI/UX', icon: '/icons/ui.png', level: 'Intermediate' },
+    { name: 'PostgreSQL', icon: '/icons/pgsql.svg', level: 'Advanced' },
+    { name: 'MongoDB', icon: '/icons/mongodb.svg', level: 'Advanced' },
+    { name: 'ExpressAPI', icon: '/icons/express.svg', level: 'Advanced' },
+    { name: 'Sanity CMS', icon: '/icons/sanity.png', level: 'Advanced' },
+    { name: 'React', icon: '/icons/react.svg', level: 'Advanced' },
+    { name: 'NextJS', icon: '/icons/next.png', level: 'Advanced' },
+    { name: 'JavaScript', icon: '/icons/javascript.svg', level: 'Advanced' },
+    { name: 'TypeScript', icon: '/icons/typescript.svg', level: 'Advanced' },
+    { name: 'Node.js', icon: '/icons/nodejs.svg', level: 'Advanced' },
+    { name: 'C', icon: '/icons/c.svg', level: 'Intermediate' },
+    { name: 'C++', icon: '/icons/cpp.svg', level: 'Intermediate' },
+    { name: 'Java', icon: '/icons/java.svg', level: 'Intermediate' },
+    { name: 'Solidity', icon: '/icons/solidity.svg', level: 'Intermediate' }
   ]
 
   return (
@@ -435,19 +456,13 @@ export default function Home() {
               <div className="flex flex-col gap-6 sm:gap-8 items-center xl:items-start">
                 {/* Profile Photo */}
                 <div className="flex justify-center w-full">
-                  {data.about?.profileImage ? (
-                    <Image 
-                      src={data.about.profileImage} 
-                      alt="Profile" 
-                      width={224}
-                      height={224}
-                      className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full border-4 border-purple-500/50 object-cover shadow-[0_20px_60px_rgba(147,51,234,0.5)] animate-pulse" 
-                    />
-                  ) : (
-                    <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full border-4 border-purple-500/50 bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center text-5xl sm:text-6xl font-extrabold text-white shadow-[0_20px_60px_rgba(147,51,234,0.5)] animate-pulse">
-                      {data.about?.name ? data.about.name[0] : '<>'}
-                    </div>
-                  )}
+                  <Image 
+                    src="/image.png" 
+                    alt="Profile" 
+                    width={224}
+                    height={224}
+                    className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full border-4 border-purple-500/50 object-cover shadow-[0_20px_60px_rgba(147,51,234,0.5)]" 
+                  />
                 </div>
 
                 {/* Name and Info */}
@@ -477,9 +492,7 @@ export default function Home() {
               <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Biography */}
                 <div className="bg-white/2 border border-white/8 rounded-xl sm:rounded-2xl p-6 sm:p-7 md:p-8 hover:bg-purple-600/5 hover:border-purple-500/30 transition-all duration-300">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5 md:mb-6">
-                    <h2 className="text-2xl sm:text-2xl md:text-3xl font-bold text-white">Biography</h2>
-                  </div>
+                  
                   <div className="text-gray-400 leading-relaxed space-y-3 sm:space-y-4 text-base sm:text-lg">
                     {data.about?.biography ? (
                       <PortableText value={data.about.biography} />
@@ -510,7 +523,7 @@ export default function Home() {
                       <h3 className="text-white font-bold text-lg sm:text-xl">Status</h3>
                     </div>
                     <p className="text-purple-400 text-sm sm:text-base leading-relaxed font-medium">
-                      {'I am actively seeking opportunities to collaborate on innovative projects. Feel free to connect with me!'}
+                      {'I am actively seeking opportunities to collaborate on innovative projects. Feel free to contact me!'}
                     </p>
                   </div>
                 </div>
@@ -531,7 +544,14 @@ export default function Home() {
                   className="glass-card p-2 sm:p-3 md:p-4 text-center group hover:scale-105 transition-all duration-300 flex flex-col justify-center items-center min-h-[90px] sm:min-h-[110px] md:min-h-[130px]"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="text-2xl sm:text-3xl md:text-4xl mb-1 sm:mb-2">{skill.icon}</div>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mb-1 sm:mb-2 relative">
+                    <Image 
+                      src={skill.icon} 
+                      alt={skill.name}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
                   <div className="text-[10px] sm:text-xs md:text-sm font-semibold text-white mb-0.5 sm:mb-1 leading-tight px-1 line-clamp-2">{skill.name}</div>
                   <div className="text-[9px] sm:text-[10px] md:text-xs text-purple-400">
                     {skill.level}
@@ -919,10 +939,6 @@ export default function Home() {
                 
                 {/* Testimonials Container */}
                 <div className="relative flex-1 py-4">
-                  {/* Translucent fade overlays for smooth blending */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
-                  <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
-                  
                   {/* Slider Track - Responsive: 1 card mobile, 3 cards desktop */}
                   <div 
                     ref={testimonialScrollRef}
