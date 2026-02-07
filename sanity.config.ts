@@ -15,8 +15,8 @@ import resume from './src/sanity/schemas/resume'
 export default defineConfig({
   basePath: '/studio',
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  projectId: 'hdjsvuip',
+  dataset: 'production',
 
   // Add all the new schemas to the array of types
   schema: {
