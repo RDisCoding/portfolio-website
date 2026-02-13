@@ -971,17 +971,17 @@ export default function Home() {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] h-[calc(90vh-60px)] sm:h-[70vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] h-[calc(90vh-60px)] sm:h-[85vh]">
               {/* Image Viewer */}
-              <div className="relative bg-black flex items-center justify-center p-6 lg:border-r border-white/10">
+              <div className="relative bg-black flex items-start justify-center p-6 lg:border-r border-white/10 overflow-y-auto">
                 {currentImages.length > 0 && currentImages[currentImageIndex]?.asset?.url && (
                   <>
                     <Image
                       src={currentImages[currentImageIndex].asset.url}
                       alt={currentImages[currentImageIndex]?.alt || getDisplayName(selectedAcademic)}
                       width={800}
-                      height={600}
-                      className="max-w-full max-h-full object-contain rounded-lg"
+                      height={1200}
+                      className="w-auto h-auto max-w-full object-contain rounded-lg"
                     />
                     {currentImages.length > 1 && (
                       <>
